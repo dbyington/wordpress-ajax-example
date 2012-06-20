@@ -10,7 +10,7 @@
  *
  *
  * @package Ajax_Example
- * @version 0.1
+ * @version 0.2
  * @author dbyington
  *
  */
@@ -19,7 +19,7 @@ Plugin Name: Ajax Example
 Plugin URI: https://github.com/dbyington/code-help/ajax-example
 Description: A simple ajax example for using ajax calls in WordPress.
 Author: Don Byington
-Version: 0.1
+Version: 0.2
 Author URI: http://wordpress.org/support/profile/dbyington
 License: GPLv2 or later
 */ 
@@ -581,3 +581,4 @@ register_deactivation_hook( __FILE__, array('Ajax_Example', 'deinstall') );
 Ajax_Example::init();
 add_action( 'widgets_init', create_function( '', 'register_widget( "Ajax_Example_Widget" );' ) );
 
+?>
