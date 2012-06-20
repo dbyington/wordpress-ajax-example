@@ -10,7 +10,7 @@
  *
  *
  * @package Ajax_Example
- * @version 0.2
+ * @version 0.3
  * @author dbyington
  *
  */
@@ -19,7 +19,7 @@ Plugin Name: Ajax Example
 Plugin URI: https://github.com/dbyington/code-help/ajax-example
 Description: A simple ajax example for using ajax calls in WordPress.
 Author: Don Byington
-Version: 0.2
+Version: 0.3
 Author URI: http://wordpress.org/support/profile/dbyington
 License: GPLv2 or later
 */ 
@@ -347,16 +347,20 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 			</form>
 </div>		
 			<p>
-			<b>Widget text goes here...</b><br /><br />
+			<b>Widget text from last widget submit goes here...</b><br /><br />
 			<span id="ajax-example-widget-output">
 			<?php echo self::get_option_value(); ?>
 			</span>
 			<br /><br /><b>and above here.</b>
 			</p>
 
-
 			<?php
+			
+			/**
+			 * Grab the buffer, then return.
+			 */
 			$form = ob_get_clean();
+
 			return( $form );
 		}
 					
@@ -411,14 +415,22 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 			 * 'output'.
 			 */
 
-			$action = isset( $post_data['action'] ) ? $post_data['action'] : '';
-			$caller = isset( $post_data['caller'] ) ? $post_data['caller'] : '';
-			$print_output = isset( $post_data['print_output'] ) ? $post_data['print_output'] : 'no';
-			$print_where = isset( $post_data['print_where'] ) ? $post_data['print_where'] : '';
-			$output = isset( $post_data['output'] ) ? $post_data['output'] : '';
-			$status = isset( $post_data['status'] ) ? $post_data['status'] : 'failed';
+			/**
+			 * Initialize a set of variables using data submitted from the
+			 * form, if set.
+			 */
+			$action 		= isset( $post_data['action'] ) ? $post_data['action'] : '';
+			$caller 		= isset( $post_data['caller'] ) ? $post_data['caller'] : '';
+			$print_output 	= isset( $post_data['print_output'] ) ? $post_data['print_output'] : 'no';
+			$print_where 	= isset( $post_data['print_where'] ) ? $post_data['print_where'] : '';
+			$output 		= isset( $post_data['output'] ) ? $post_data['output'] : '';
+			$status 		= isset( $post_data['status'] ) ? $post_data['status'] : 'failed';
 
 
+			/**
+			 * Called by the widget so just update the option in the database
+			 * and return 'passed' if the update succeeded.
+			 */
 			if ( $caller == 'ajax-example-widget' ) {
 				if ( isset($post_data['example-data'] ) ) {
 					if ( update_option( 'ajax_example', $post_data['example-data'] ) )
@@ -427,11 +439,18 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 				}
 			}
 
-			
+			/**
+			 * Called by the admin options form. I'm just going to return the
+			 * post data array within <pre></pre> to get a nice view of what
+			 * was submitted to this function.
+			 */
 			if ( $caller == 'admin-options' ) {
 				$print_output = 'yes';
 				$status = 'passed';
 				
+				/**
+				 * Again, buffering the output.
+				 */
 				ob_start(); ?>
 <pre>
 <?php print_r( $post_data ); ?>
@@ -440,18 +459,30 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 				$output = ob_get_clean();
 			}
 			
+			/**
+			 * Called by the update widget text button so set status passed and
+			 * get the option value from the database.
+			 */
 			if ( $caller == 'update-widget-text' ) {
 				$status = 'passed';
 				$output = self::get_option_value();
 			}
 				
 
+			/**
+			 * Here I'm building an array to encode for a JSON response back to
+			 * the ajax caller.
+			 */
 			$return = array( 
 						'caller'		=> $caller,
 						'status' 		=> $status, 
 						'print_output'	=> $print_output,
 						'print_where'	=> $print_where,
 						'output'		=> $output );
+						
+			/**
+			 * Using die sends the die statement and stops exits our script.
+			 */
 			die( json_encode( $return ) );
 
 		}
@@ -464,9 +495,14 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 
 	} // End Ajax_Example
 
-endif;
+endif; // if ( ! class_exists( 'Ajax_Example' ) {
 
 
+/**
+ * Almost all of this was copied straight from the example;
+ * http://codex.wordpress.org/Widgets_API#Example
+ * My additions/changes are commented.
+ */
 if ( ! class_exists( 'Ajax_Example_Widget' ) ) :
 	class Ajax_Example_Widget extends WP_Widget {
 
@@ -479,7 +515,22 @@ if ( ! class_exists( 'Ajax_Example_Widget' ) ) :
 				'Ajax_Example_Widget', // Name
 				array( 'description' => __( 'An Ajax Example Widget', 'ajax_example' ), ) // Args
 			);
+			
+			/**
+			 * Here I have to ensure that jquery has been loaded into 
+			 * the <head></head>. The plugin is taking care of the 
+			 * javascript for the ajax caller. I've found that even though
+			 * the script is being loaded jQuery doesn't get loaded without
+			 * specifically loading it.
+			 */
 			wp_enqueue_script( 'jquery' );
+			
+			/**
+			 * 'ajaxurl' is only defined by default in the admin <head></head>,
+			 * so it needs to be defined if it will be used. The plugin above
+			 * uses it so make sure it's there. Otherwise the javascript will
+			 * fire, but it won't know where to send the data.
+			 */
 			add_action( 'wp_head', array( __CLASS__, 'define_ajaxurl' ) );
 
 		}
@@ -496,6 +547,11 @@ if ( ! class_exists( 'Ajax_Example_Widget' ) ) :
 			extract( $args );
 			$title = apply_filters( 'Ajax Example Widget', $instance['title'] );
 
+
+			/**
+			 * Again note the four items; form id, span class, and input submit 
+			 * class and name.
+			 */
 			echo $before_widget;
 			if ( ! empty( $title ) )
 				echo $before_title . $title . $after_title;
@@ -557,7 +613,9 @@ if ( ! class_exists( 'Ajax_Example_Widget' ) ) :
 
 			
 		/**
-		 * Make sure to define ajaxurl, need outside the admin area
+		 * Make sure to define ajaxurl, need outside the admin area.
+		 *
+		 * Again this is just for our ajax caller to be able to use 'ajaxurl'.
 		 *
 		 * @param	none
 		 * @return	none
@@ -576,9 +634,27 @@ if ( ! class_exists( 'Ajax_Example_Widget' ) ) :
 	} // End Ajax_Example_Widget
 endif;
 
+/**
+ * Since I'm using the options table I want to initialize my option.
+ * And since it really don't need to be cached I say no. However,
+ * if your plugin/widget does a lot of interacting with the options
+ * or any other table you may want it cached.
+ */
 register_activation_hook( __FILE__, array('Ajax_Example', 'install') );
+
+/**
+ * A deinstall to remove my option from the options table.
+ */
 register_deactivation_hook( __FILE__, array('Ajax_Example', 'deinstall') );
+
+/**
+ * Call the plugin class init() function to get things going.
+ */
 Ajax_Example::init();
+
+/**
+ *
+ */
 add_action( 'widgets_init', create_function( '', 'register_widget( "Ajax_Example_Widget" );' ) );
 
 ?>
