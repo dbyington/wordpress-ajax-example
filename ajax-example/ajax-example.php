@@ -6,20 +6,23 @@
  * This is just one of many ways to make use of ajax calls withing WordPress.
  * This just happens to be the way I got ajax to work.
  *
+ * I must stress that this is an example, with way more comments than are neccessary
+ * to thouroughly explain what is going on.
+ *
  * License: GPLv2 or later
  *
  *
  * @package Ajax_Example
- * @version 0.3
+ * @version 0.4
  * @author dbyington
  *
  */
 /*
 Plugin Name: Ajax Example
-Plugin URI: https://github.com/dbyington/code-help/ajax-example
+Plugin URI: https://github.com/dbyington/wordpress-ajax-example/ajax-example
 Description: A simple ajax example for using ajax calls in WordPress.
 Author: Don Byington
-Version: 0.3
+Version: 0.4
 Author URI: http://wordpress.org/support/profile/dbyington
 License: GPLv2 or later
 */ 
@@ -27,13 +30,14 @@ License: GPLv2 or later
 if ( ! class_exists( 'Ajax_Example' ) ) :
 	class Ajax_Example {
 
+
 		/**
 		 * The base init function to add/load what we need.
 		 *
 		 * @param	none
 		 * @return	none
 		 */
-		function init() {
+		public function init() {
 
 			/**
 			 * Load the javascript inside the <head> tag
@@ -78,7 +82,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param	none
 		 * @return	none
 		 */
-		function install() {
+		public function install() {
 			add_option( 'ajax_example', null, null, 'no' );
 		}
 
@@ -89,7 +93,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param	none
 		 * @return	none
 		 */
-		function deinstall() {
+		public function deinstall() {
 			delete_option( 'ajax_example' );
 		}
 
@@ -100,7 +104,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param	none
 		 * @return	none
 		 */
-		function load_jquery() {
+		public function load_jquery() {
 			wp_enqueue_script('jquery');
 			wp_enqueue_script('jquery-form');
 		}
@@ -117,7 +121,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param	none
 		 * @return	none
 		 */
-		function add_ajax_example_admin_options() {
+		public function add_ajax_example_admin_options() {
 			add_options_page( 
 				__( 'Ajax Example Options', 'ajax_example' ),
 				__( 'Ajax Example', 'ajax_example' ),
@@ -140,7 +144,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param	none
 		 * @return	none
 		 */
-		function add_ajax_example_menu() {
+		private function add_ajax_example_menu() {
 			add_menu_page( __( 'Ajax Example Menu', 'ajax_example' ),
 				__( 'Ajax Example Page', 'ajax_example' ),
 				'',
@@ -158,7 +162,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @return	string	The text from the last insert or NULL
 		 *			if nothing is there.
 		 */
-		function get_option_value() {
+		private function get_option_value() {
 			$text = get_option( 'ajax_example' );
 			if ( isset( $text ) ) {
 				return $text;
@@ -174,7 +178,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param    none
 		 * @return   none
 		 */
-		function print_options_page() {
+		public function print_options_page() {
 			echo self::build_example_form();
 
 		}
@@ -197,19 +201,21 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param    none
 		 * @return   none
 		 */
-		function ajax_handler() {
+		public function ajax_handler() {
 			$ajax_nonce = wp_create_nonce('ajax_example');
 			?>
+
 			<script type="text/javascript">
-			var $jQ = jQuery.noConflict();
-			$jQ(document).ready( function( $ ) {
-				$jQ(document).on('click', '.ajax-trigger', function ($) {
+			var $my_jQuery = jQuery.noConflict();
+
+			$my_jQuery(document).ready( function( $ ) {
+				$my_jQuery(document).on('click', '.ajax-trigger', function ($) {
 
 					/**
 					 * Get the action from the value of 'name=' in the submit input
 					 * that has the class 'action'.
 					 */
-					var $action = $jQ(this).find('input.action').attr('name'); 
+					var $action = $my_jQuery(this).find('input.action').attr('name'); 
 
 					/**
 					 * Derive the form id from the action.
@@ -219,19 +225,19 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 					/**
 					 * Serialize the form data to then extract from $_POST with parse_str() 
 					 */
-					var $data = $jQ($form).serialize();
+					var $data = $my_jQuery($form).serialize();
 
 					/**
 					 * We can go ahead and reset the form fields.
 					 */
-					$jQ($form).resetForm();
+					$my_jQuery($form).resetForm();
 					
 					/**
 					 * 'ajaxurl' is defined by default in WordPress,and points to 
 					 * admin-ajax.php. However, below you'll se we need to define it
 					 * in the Widget, because it only gets defined in the admin pages.
 					 */
-					$jQ.post(ajaxurl, {
+					$my_jQuery.post(ajaxurl, {
 					
 						/**
 						 * Send our key value pairs as a POST to admin-ajax.php.
@@ -249,18 +255,18 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 							/**
 							 * Unserialize the response into an object.
 							 */
-							var $json_response = $jQ.parseJSON( response );
+							var $json_response = $my_jQuery.parseJSON( response );
 
 							/**
 							 * In here you have lots of options for what you want to do.
 							 * I'm just testing for a 'print_output' var and if it is 'yes',
 							 * Then I determine if it goes into an alert or an id tag somewhere.
 							 */
-							if ( $json_response.print_output == 'yes' ) {
-								if ( $json_response.print_where == 'alert' ) {
+							if ( 'yes' == $json_response.print_output ) {
+								if ( 'alert' == $json_response.print_where ) {
 									alert( $json_response.output );
 								} else {
-									$jQ('#'+$json_response.print_where).html($json_response.output);
+									$my_jQuery('#'+$json_response.print_where).html($json_response.output);
 								}
 							}
 						} 
@@ -293,7 +299,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @param    none
 		 * @return   string	The contents of our form.
 		 */
-		function build_example_form() {
+		private function build_example_form() {
 
 			/**
 			 * Buffer the form so we can return it in a variable.
@@ -377,7 +383,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 		 * @return   none	Technically none. If you count a return from die() then
 		 *			a string.
 		 */
-		function handle_example_call() {
+		public function handle_example_call() {
 
 			/**
 			 * First, verify who's making the call with check_ajax_referer()
@@ -419,19 +425,19 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 			 * Initialize a set of variables using data submitted from the
 			 * form, if set.
 			 */
-			$action 		= isset( $post_data['action'] ) ? $post_data['action'] : '';
-			$caller 		= isset( $post_data['caller'] ) ? $post_data['caller'] : '';
-			$print_output 	= isset( $post_data['print_output'] ) ? $post_data['print_output'] : 'no';
-			$print_where 	= isset( $post_data['print_where'] ) ? $post_data['print_where'] : '';
-			$output 		= isset( $post_data['output'] ) ? $post_data['output'] : '';
-			$status 		= isset( $post_data['status'] ) ? $post_data['status'] : 'failed';
+			$action = isset( $post_data['action'] ) ? $post_data['action'] : '';
+			$caller = isset( $post_data['caller'] ) ? $post_data['caller'] : '';
+			$print_output = isset( $post_data['print_output'] ) ? $post_data['print_output'] : 'no';
+			$print_where = isset( $post_data['print_where'] ) ? $post_data['print_where'] : '';
+			$output = isset( $post_data['output'] ) ? $post_data['output'] : '';
+			$status = isset( $post_data['status'] ) ? $post_data['status'] : 'failed';
 
 
 			/**
 			 * Called by the widget so just update the option in the database
 			 * and return 'passed' if the update succeeded.
 			 */
-			if ( $caller == 'ajax-example-widget' ) {
+			if ( 'ajax-example-widget' == $caller ) {
 				if ( isset($post_data['example-data'] ) ) {
 					if ( update_option( 'ajax_example', $post_data['example-data'] ) )
 						$status = 'passed';
@@ -444,7 +450,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 			 * post data array within <pre></pre> to get a nice view of what
 			 * was submitted to this function.
 			 */
-			if ( $caller == 'admin-options' ) {
+			if ( 'admin-options' == $caller ) {
 				$print_output = 'yes';
 				$status = 'passed';
 				
@@ -452,9 +458,9 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 				 * Again, buffering the output.
 				 */
 				ob_start(); ?>
-<pre>
-<?php print_r( $post_data ); ?>
-</pre>
+				<pre>
+				<?php print_r( $post_data ); ?>
+				</pre>
 				<?php
 				$output = ob_get_clean();
 			}
@@ -463,7 +469,7 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 			 * Called by the update widget text button so set status passed and
 			 * get the option value from the database.
 			 */
-			if ( $caller == 'update-widget-text' ) {
+			if ( 'update-widget-text' == $caller ) {
 				$status = 'passed';
 				$output = self::get_option_value();
 			}
@@ -486,11 +492,6 @@ if ( ! class_exists( 'Ajax_Example' ) ) :
 			die( json_encode( $return ) );
 
 		}
-
-			
-
-
-
 
 
 	} // End Ajax_Example
@@ -605,8 +606,8 @@ if ( ! class_exists( 'Ajax_Example_Widget' ) ) :
 			}
 			?>
 			<p>
-			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label> 
-			<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
+			<label for="<?php echo self::get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label> 
+			<input class="widefat" id="<?php echo self::get_field_id( 'title' ); ?>" name="<?php echo self::get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
 			</p>
 			<?php 
 		}
@@ -620,7 +621,7 @@ if ( ! class_exists( 'Ajax_Example_Widget' ) ) :
 		 * @param	none
 		 * @return	none
 		 */
-		function define_ajaxurl() {
+		public function define_ajaxurl() {
 			?>
 			<script type="text/javascript">
 			var ajaxurl = '<?php echo admin_url( 'admin-ajax.php' ); ?>'
